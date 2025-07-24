@@ -1,7 +1,9 @@
 from ldap3 import Server, Connection, ALL
 from datetime import date, datetime,timedelta
 import winfiletime
-import win32com.client as win32
+import sys
+from smtplib import SMTP_SSL as SMTP
+from email.mime.text import MIMEText
 
 #https://dnmtechs.com/python-3-ldap-authentication-with-active-directory/
 #https://ldap3.readthedocs.io/en/latest/
@@ -9,31 +11,35 @@ import win32com.client as win32
 #https://github.com/jleclanche/winfiletime
 #https://stackoverflow.com/questions/6332577/send-outlook-email-via-python
 #https://stackoverflow.com/questions/24192252/python-sending-outlook-email-from-different-address-using-pywin32
+#https://stackoverflow.com/questions/64505/sending-mail-from-python-using-smtp
 
 max_days=90
 
 server = Server('ip AD??')
 username = 'nie wiem'
-password = 'tez nie wiem' #dodac plik konfiguracyjny
+password = 'tez nie wiem'
 BASE_DN = 'nie wiem'
 
-def send_notification(recipient,message): #wysyla sie z konta osoby ktora jest zalogowana na tym komputerze
-    outlook = win32.Dispatch('outlook.application')
-    mail=outlook.CreateItem(0)
-    mail.To=recipient
-    mail.Subject='Hasło zaraz wygaśnie'
-    mail.Body=message
+def send_notification(recipient,message):
+    SMTPserver = 'nasz serwer'
+    sender = 'mail'
 
-    From = None
-    for myEmailAddress in outlook.Session.Accounts:
-        if "anna.smuga" in str(myEmailAddress):
-            From = myEmailAddress
-            break
-
-    if From != None:
-        # This line basically calls the "mail.SendUsingAccount = xyz@email.com" outlook VBA command
-        mail._oleobj_.Invoke(*(64209, 0, 8, 0, From))
-        mail.Send()
+    USERNAME = "USER_NAME_FOR_INTERNET_SERVICE_PROVIDER"
+    PASSWORD = "PASSWORD_INTERNET_SERVICE_PROVIDER"
+    text_subtype = 'plain'
+    try:
+        msg = MIMEText(message, text_subtype)
+        msg['Subject'] = 'Hasło wkrótce wygaśnie'
+        msg['From'] = sender
+        conn = SMTP(SMTPserver)
+        conn.set_debuglevel(False)
+        conn.login(USERNAME, PASSWORD)
+        try:
+            conn.sendmail(sender, recipient, msg.as_string())
+        finally:
+            conn.quit()
+    except Exception as e:
+        sys.exit(f"mail failed {e}")
 
 try:
     conn = Connection(server, user=username, password=password)
