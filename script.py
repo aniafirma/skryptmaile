@@ -1,4 +1,3 @@
-import ldap3
 from ldap3 import Server, Connection, ALL
 from datetime import date, datetime,timedelta
 import winfiletime
@@ -16,14 +15,14 @@ max_days=90
 server = Server('ip AD??')
 username = 'nie wiem'
 password = 'tez nie wiem'
-BASE_DN = 'DC=example,DC=com'
+BASE_DN = 'nie wiem'
 
-def send_notification(recipient): #wysyla sie z konta osoby ktora jest zalogowana na tym komputerze
+def send_notification(recipient,message): #wysyla sie z konta osoby ktora jest zalogowana na tym komputerze
     outlook = win32.Dispatch('outlook.application')
     mail=outlook.CreateItem(0)
     mail.To=recipient
     mail.Subject='Hasło zaraz wygaśnie'
-    mail.Body='Dzień dobry proszę zmienić hasło bo zaraz wygaśnie'
+    mail.Body=message
 
     From = None
     for myEmailAddress in outlook.Session.Accounts:
@@ -34,7 +33,6 @@ def send_notification(recipient): #wysyla sie z konta osoby ktora jest zalogowan
     if From != None:
         # This line basically calls the "mail.SendUsingAccount = xyz@email.com" outlook VBA command
         mail._oleobj_.Invoke(*(64209, 0, 8, 0, From))
-
         mail.Send()
 
 try:
@@ -50,8 +48,11 @@ try:
 
         age=current_date-when_set #zwraca timedelta
 
-        if age>timedelta(days=max_days-7): #powiadamiamy tydzien przed
-            send_notification(mail)
+        if age>timedelta(days=max_days-1): #powiadamiamy tydzien przed
+            send_notification(mail,'Za 1 dzień haslo wygasa. Proszę je pilnie zmienić albo konto zostanie zablokowane!')
+
+        elif age>timedelta(days=max_days-7): #powiadamiamy tydzien przed
+            send_notification(mail,'Za 7 dni hasło wygasa. Proszę je zmienić')
 
 except Exception as e:
-    print(f"Connection failed:(+ {e}")
+    print(f"Connection failed :( - {e}")
