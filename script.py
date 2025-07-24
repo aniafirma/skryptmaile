@@ -3,13 +3,6 @@ from datetime import date, datetime,timedelta
 import winfiletime
 import win32com.client as win32
 
-#https://dnmtechs.com/python-3-ldap-authentication-with-active-directory/
-#https://ldap3.readthedocs.io/en/latest/
-#https://learn.microsoft.com/en-us/windows/win32/ad/user-object-attributes
-#https://github.com/jleclanche/winfiletime
-#https://stackoverflow.com/questions/6332577/send-outlook-email-via-python
-#https://stackoverflow.com/questions/24192252/python-sending-outlook-email-from-different-address-using-pywin32
-
 max_days=90
 
 server = Server('ip AD??')

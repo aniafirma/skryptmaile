@@ -1,31 +1,26 @@
 from ldap3 import Server, Connection, ALL
 from datetime import date, datetime,timedelta
+from dotenv import load_dotenv
+import os
 import winfiletime
 import sys
 from smtplib import SMTP_SSL as SMTP
 from email.mime.text import MIMEText
 
-#https://dnmtechs.com/python-3-ldap-authentication-with-active-directory/
-#https://ldap3.readthedocs.io/en/latest/
-#https://learn.microsoft.com/en-us/windows/win32/ad/user-object-attributes
-#https://github.com/jleclanche/winfiletime
-#https://stackoverflow.com/questions/6332577/send-outlook-email-via-python
-#https://stackoverflow.com/questions/24192252/python-sending-outlook-email-from-different-address-using-pywin32
-#https://stackoverflow.com/questions/64505/sending-mail-from-python-using-smtp
-
+load_dotenv()
 max_days=90
 
-server = Server('ip AD??')
-username = 'nie wiem'
-password = 'tez nie wiem'
+server = Server(os.getenv('AD_SERVER'))
+username = os.getenv('AD_USERNAME')
+password = os.getenv('AD_PASSWORD')
 BASE_DN = 'nie wiem'
 
 def send_notification(recipient,message):
-    SMTPserver = 'nasz serwer'
-    sender = 'mail'
+    SMTPserver = os.getenv('SMTP_SERVER')
+    sender = os.getenv('SMTP_SENDER')
 
-    USERNAME = "USER_NAME_FOR_INTERNET_SERVICE_PROVIDER"
-    PASSWORD = "PASSWORD_INTERNET_SERVICE_PROVIDER"
+    SMTPusername = os.getenv('SMTP_USERNAME')
+    SMTPpassword = os.getenv('SMTP_PASSWORD')
     text_subtype = 'plain'
     try:
         msg = MIMEText(message, text_subtype)
@@ -33,7 +28,7 @@ def send_notification(recipient,message):
         msg['From'] = sender
         conn = SMTP(SMTPserver)
         conn.set_debuglevel(False)
-        conn.login(USERNAME, PASSWORD)
+        conn.login(SMTPusername, SMTPpassword)
         try:
             conn.sendmail(sender, recipient, msg.as_string())
         finally:
