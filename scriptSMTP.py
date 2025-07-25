@@ -8,6 +8,7 @@ from smtplib import SMTP_SSL as SMTP
 from email.mime.text import MIMEText
 
 load_dotenv()
+
 max_days=90
 
 server = Server(os.getenv('AD_SERVER'))
@@ -15,6 +16,7 @@ username = os.getenv('AD_USERNAME')
 password = os.getenv('AD_PASSWORD')
 BASE_DN = 'nie wiem'
 
+SMTPport=os.getenv('SMTP_PORT')
 SMTPserver = os.getenv('SMTP_SERVER')
 sender = os.getenv('SMTP_SENDER')
 SMTPusername = os.getenv('SMTP_USERNAME')
@@ -35,7 +37,7 @@ def send_notification(recipient,message):
             conn.quit()
     except Exception as e:
         sys.exit(f"Sending email failed - {e}")
-
+#wysylac html
 try:
     conn = Connection(server, user=username, password=password)
     conn.bind()
@@ -54,6 +56,8 @@ try:
 
         elif age>timedelta(days=max_days-7): #powiadamiamy tydzien przed
             send_notification(mail,'Za 7 dni hasło wygasa. Proszę je zmienić')
-
+            #byc podlaconym vpn, ctrl + alt + delete, -> opcja zmien haslo, nastepnie w oknie zmien haslo, podaj stare i 2 razy nowe haslo
+# info o tym haslo min 8 znakow, haslo musi zawierac znaki specjalne, duze i male litery, cyfry; nie mozesz ustawi hasla wczesniej ustawionego
 except Exception as e:
     print(f"Connection to AD server failed :( - {e}")
+#dodac port smtp i tsl, dodac tresc wiadomosci, dodac html

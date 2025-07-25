@@ -24,7 +24,6 @@ def send_notification(recipient,message): #wysyla sie z konta osoby ktora jest z
             break
 
     if From != None:
-        # This line basically calls the "mail.SendUsingAccount = xyz@email.com" outlook VBA command
         mail._oleobj_.Invoke(*(64209, 0, 8, 0, From))
         mail.Send()
 
