@@ -16,3 +16,5 @@ https://github.com/jleclanche/winfiletime
 https://stackoverflow.com/questions/6332577/send-outlook-email-via-python
 https://stackoverflow.com/questions/24192252/python-sending-outlook-email-from-different-address-using-pywin32
 https://stackoverflow.com/questions/64505/sending-mail-from-python-using-smtp
+https://docs.python.org/3/library/smtplib.html
+https://docs.python.org/3/library/email.mime.html
