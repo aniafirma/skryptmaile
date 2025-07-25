@@ -15,13 +15,13 @@ username = os.getenv('AD_USERNAME')
 password = os.getenv('AD_PASSWORD')
 BASE_DN = 'nie wiem'
 
-def send_notification(recipient,message):
-    SMTPserver = os.getenv('SMTP_SERVER')
-    sender = os.getenv('SMTP_SENDER')
+SMTPserver = os.getenv('SMTP_SERVER')
+sender = os.getenv('SMTP_SENDER')
+SMTPusername = os.getenv('SMTP_USERNAME')
+SMTPpassword = os.getenv('SMTP_PASSWORD')
+text_subtype = 'plain'
 
-    SMTPusername = os.getenv('SMTP_USERNAME')
-    SMTPpassword = os.getenv('SMTP_PASSWORD')
-    text_subtype = 'plain'
+def send_notification(recipient,message):
     try:
         msg = MIMEText(message, text_subtype)
         msg['Subject'] = 'Hasło wkrótce wygaśnie'
@@ -34,7 +34,7 @@ def send_notification(recipient,message):
         finally:
             conn.quit()
     except Exception as e:
-        sys.exit(f"mail failed {e}")
+        sys.exit(f"Sending email failed - {e}")
 
 try:
     conn = Connection(server, user=username, password=password)
@@ -49,11 +49,11 @@ try:
 
         age=current_date-when_set #zwraca timedelta
 
-        if age>timedelta(days=max_days-1): #powiadamiamy tydzien przed
+        if age>timedelta(days=max_days-1): #powiadamiamy dzień przed
             send_notification(mail,'Za 1 dzień haslo wygasa. Proszę je pilnie zmienić albo konto zostanie zablokowane!')
 
         elif age>timedelta(days=max_days-7): #powiadamiamy tydzien przed
             send_notification(mail,'Za 7 dni hasło wygasa. Proszę je zmienić')
 
 except Exception as e:
-    print(f"Connection failed :( - {e}")
+    print(f"Connection to AD server failed :( - {e}")
