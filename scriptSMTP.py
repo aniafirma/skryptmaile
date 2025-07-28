@@ -1,6 +1,6 @@
 from email.mime.multipart import MIMEMultipart
 from ldap3 import Server, Connection, ALL
-from datetime import date, datetime,timedelta
+from datetime import date, datetime,timedelta,timezone
 from dotenv import load_dotenv
 import os
 import winfiletime
@@ -15,7 +15,8 @@ max_days=90
 server = Server(os.getenv('AD_SERVER'))
 username = os.getenv('AD_USERNAME')
 password = os.getenv('AD_PASSWORD')
-BASE_DN = 'DC=allclouds,DC=pl'
+BASE_DN = os.getenv('BASE_DN')
+print(BASE_DN)
 
 SMTPport=(int)(os.getenv('SMTP_PORT'))
 TLS = os.getenv("TLS", "False").lower() == "true"
@@ -67,7 +68,7 @@ def send_notification(recipient,message):
                    <h2> Twoje hasło wkrótce wygaśnie</h2>
                    <p>{message.replace('\n', '<br>')}</p>
                    <div class="footer">
-                     <p>To jest automatyczna wiadomość. Prosimy na nią nie odpowiadać.</p>
+                     <p>To jest automatyczna wiadomość. Prosimy na nią nie odpowiadać. W przypadku dalszych pytań prosimy o kontakt z działem IT</p>
                    </div>
                  </div>
                </body>
@@ -117,7 +118,8 @@ try:
             print(f"User has no email : {entry['distinguishedName']}")
             continue
 
-        current_date = datetime.now()
+        current_date = datetime.now(timezone.utc)
+        when_set = when_set.astimezone(timezone.utc)
 
         days_since_change = (current_date - when_set).days
         days_until_expiry = max_days - days_since_change
@@ -152,20 +154,5 @@ try:
             "- Znaki specjalne\n"
             "- Hasło nie może być wcześniej używane")
 
-
 except Exception as e:
     print(f"Connection to AD server failed :( - {e}")
-
-send_notification("weronika.biernat@allclouds.pl", "Twoje hasło do systemu wygaśnie za 1 dzień.\n"
-            "Prosimy o jego niezwłoczną zmianę, aby uniknąć zablokowania konta.\n\n"
-            "Instrukcja zmiany hasła:\n"
-            "- Połącz się z firmową siecią przez VPN\n"
-            "- Naciśnij Ctrl + Alt + Delete\n"
-            "- Wybierz opcję 'Zmień hasło'\n"
-            "- Wpisz stare hasło oraz nowe hasło dwukrotnie\n\n"
-            "Wymagania dla nowego hasła:\n" 
-            "- Minimum 8 znaków\n"
-            "- Duże i małe litery\n"
-            "- Cyfry\n"
-            "- Znaki specjalne\n"
-            "- Hasło nie może być wcześniej używane")
