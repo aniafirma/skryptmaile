@@ -1,12 +1,14 @@
-teraz można postawić skrypt na serwerze żeby działał cały czas, potrzeba: 
-AD: 
-ip/ nazwa serwera na którym jest AD
-username i hasło do ad
-BASE_DN: punkt startowy wyszukiwania w AD
-SMTP:
-adres serwera SMTP
-username i hasło do smtp
-adres z którego mają być wysyłane wiadomości
+plik env: 
+AD_USERNAME=
+AD_PASSWORD=
+AD_SERVER=
+SMTP_USERNAME=
+SMTP_PASSWORD=
+SMTP_SERVER=
+SMTP_SENDER=
+SMTP_PORT=
+TLS=
+BASE_DN=
 
 Źródła: 
 https://dnmtechs.com/python-3-ldap-authentication-with-active-directory/
