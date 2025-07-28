@@ -1,10 +1,11 @@
+from email.mime.multipart import MIMEMultipart
 from ldap3 import Server, Connection, ALL
 from datetime import date, datetime,timedelta
 from dotenv import load_dotenv
 import os
 import winfiletime
 import sys
-from smtplib import SMTP_SSL as SMTP
+import smtplib
 from email.mime.text import MIMEText
 
 load_dotenv()
@@ -14,30 +15,93 @@ max_days=90
 server = Server(os.getenv('AD_SERVER'))
 username = os.getenv('AD_USERNAME')
 password = os.getenv('AD_PASSWORD')
-BASE_DN = 'nie wiem'
+BASE_DN = 'DC=allclouds,DC=pl'
 
-SMTPport=os.getenv('SMTP_PORT')
+SMTPport=(int)(os.getenv('SMTP_PORT'))
+TLS = os.getenv("TLS", "False").lower() == "true"
 SMTPserver = os.getenv('SMTP_SERVER')
 sender = os.getenv('SMTP_SENDER')
 SMTPusername = os.getenv('SMTP_USERNAME')
 SMTPpassword = os.getenv('SMTP_PASSWORD')
-text_subtype = 'plain'
 
 def send_notification(recipient,message):
     try:
-        msg = MIMEText(message, text_subtype)
+        part1=MIMEText(message,"plain")
+
+        html_content = f"""\
+               <html>
+               <head>
+                 <style>
+                   body {{
+                     font-family: Arial, sans-serif;
+                     background-color: #f4f4f4;
+                     margin: 0;
+                     padding: 0;
+                   }}
+                   .container {{
+                     background-color: #ffffff;
+                     max-width: 600px;
+                     margin: 30px auto;
+                     padding: 20px;
+                     border-radius: 8px;
+                     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+                   }}
+                   h2 {{
+                     color: #2c3e50;
+                     text-align: center;
+                   }}
+                   p {{
+                     color: #333333;
+                     line-height: 1.6;
+                   }}
+                   .footer {{
+                     margin-top: 30px;
+                     font-size: 12px;
+                     color: #999999;
+                     text-align: center;
+                   }}
+                 </style>
+               </head>
+               <body>
+                 <div class="container">
+                   <h2> Twoje hasło wkrótce wygaśnie</h2>
+                   <p>{message.replace('\n', '<br>')}</p>
+                   <div class="footer">
+                     <p>To jest automatyczna wiadomość. Prosimy na nią nie odpowiadać.</p>
+                   </div>
+                 </div>
+               </body>
+               </html>
+               """
+
+        part2=MIMEText(html_content,"html")
+
+        msg = MIMEMultipart("alternative")
+
         msg['Subject'] = 'Hasło wkrótce wygaśnie'
         msg['From'] = sender
-        conn = SMTP(SMTPserver)
+        msg.attach(part1)
+        msg.attach(part2)
+        print(f"Connecting to SMTP server: {SMTPserver}:{SMTPport}, TLS: {TLS}")
+
+        if TLS:
+            conn = smtplib.SMTP(SMTPserver, SMTPport)
+            conn.ehlo()
+            conn.starttls()
+            conn.ehlo()
+        else:
+            conn = smtplib.SMTP_SSL(SMTPserver, SMTPport)
+
         conn.set_debuglevel(False)
         conn.login(SMTPusername, SMTPpassword)
         try:
             conn.sendmail(sender, recipient, msg.as_string())
+            print('email sent')
         finally:
             conn.quit()
     except Exception as e:
         sys.exit(f"Sending email failed - {e}")
-#wysylac html
+
 try:
     conn = Connection(server, user=username, password=password)
     conn.bind()
@@ -46,18 +110,62 @@ try:
     for entry in conn.entries:
         date_changed=entry['pwdLastSet'].value
         when_set=winfiletime.to_datetime(date_changed)
-        mail=entry['mail'].value
+        mail = entry['mail'].value
+        if isinstance(mail, list):
+            mail = mail[0] if mail else None
+        if not mail:
+            print(f"User has no email : {entry['distinguishedName']}")
+            continue
+
         current_date = datetime.now()
 
-        age=current_date-when_set #zwraca timedelta
+        days_since_change = (current_date - when_set).days
+        days_until_expiry = max_days - days_since_change
 
-        if age>timedelta(days=max_days-1): #powiadamiamy dzień przed
-            send_notification(mail,'Za 1 dzień haslo wygasa. Proszę je pilnie zmienić albo konto zostanie zablokowane!')
+        if days_until_expiry == 1: #powiadamiamy dzień przed
+            send_notification(mail,"Twoje hasło do systemu wygaśnie za 1 dzień.\n"
+            "Prosimy o jego niezwłoczną zmianę, aby uniknąć zablokowania konta.\n\n"
+            "Instrukcja zmiany hasła:\n"
+            "- Połącz się z firmową siecią przez VPN\n"
+            "- Naciśnij Ctrl + Alt + Delete\n"
+            "- Wybierz opcję 'Zmień hasło'\n"
+            "- Wpisz stare hasło oraz nowe hasło dwukrotnie\n\n"
+            "Wymagania dla nowego hasła:\n" 
+            "- Minimum 8 znaków\n"
+            "- Duże i małe litery\n"
+            "- Cyfry\n"
+            "- Znaki specjalne\n"
+            "- Hasło nie może być wcześniej używane")
 
-        elif age>timedelta(days=max_days-7): #powiadamiamy tydzien przed
-            send_notification(mail,'Za 7 dni hasło wygasa. Proszę je zmienić')
-            #byc podlaconym vpn, ctrl + alt + delete, -> opcja zmien haslo, nastepnie w oknie zmien haslo, podaj stare i 2 razy nowe haslo
-# info o tym haslo min 8 znakow, haslo musi zawierac znaki specjalne, duze i male litery, cyfry; nie mozesz ustawi hasla wczesniej ustawionego
+        elif days_until_expiry == 7: #powiadamiamy tydzien przed
+            send_notification(mail,"Twoje hasło do systemu wygaśnie za 1 dzień.\n"
+            "Prosimy o jego niezwłoczną zmianę, aby uniknąć zablokowania konta.\n\n"
+            "Instrukcja zmiany hasła:\n"
+            "- Połącz się z firmową siecią przez VPN\n"
+            "- Naciśnij Ctrl + Alt + Delete\n"
+            "- Wybierz opcję 'Zmień hasło'\n"
+            "- Wpisz stare hasło oraz nowe hasło dwukrotnie\n\n"
+            "Wymagania dla nowego hasła:\n" 
+            "- Minimum 8 znaków\n"
+            "- Duże i małe litery\n"
+            "- Cyfry\n"
+            "- Znaki specjalne\n"
+            "- Hasło nie może być wcześniej używane")
+
+
 except Exception as e:
     print(f"Connection to AD server failed :( - {e}")
-#dodac port smtp i tsl, dodac tresc wiadomosci, dodac html
+
+send_notification("weronika.biernat@allclouds.pl", "Twoje hasło do systemu wygaśnie za 1 dzień.\n"
+            "Prosimy o jego niezwłoczną zmianę, aby uniknąć zablokowania konta.\n\n"
+            "Instrukcja zmiany hasła:\n"
+            "- Połącz się z firmową siecią przez VPN\n"
+            "- Naciśnij Ctrl + Alt + Delete\n"
+            "- Wybierz opcję 'Zmień hasło'\n"
+            "- Wpisz stare hasło oraz nowe hasło dwukrotnie\n\n"
+            "Wymagania dla nowego hasła:\n" 
+            "- Minimum 8 znaków\n"
+            "- Duże i małe litery\n"
+            "- Cyfry\n"
+            "- Znaki specjalne\n"
+            "- Hasło nie może być wcześniej używane")
