@@ -1,12 +1,13 @@
 from email.mime.multipart import MIMEMultipart
 from ldap3 import Server, Connection, ALL
 from datetime import date, datetime,timedelta,timezone
-from dotenv import load_dotenv
-import os
 import winfiletime
 import sys
 import smtplib
 from email.mime.text import MIMEText
+from cryptography.fernet import Fernet
+import os
+from dotenv import load_dotenv
 
 load_dotenv()
 
@@ -14,7 +15,16 @@ max_days=90
 
 server = Server(os.getenv('AD_SERVER'))
 username = os.getenv('AD_USERNAME')
-password = os.getenv('AD_PASSWORD')
+
+#AD password
+pathAD=os.getenv('AD_PATH')
+with open(pathAD, "rb") as key_file:
+    key = key_file.read()
+
+f = Fernet(key)
+encrypted_password = os.getenv("AD_PASSWORD").encode()
+password = f.decrypt(encrypted_password).decode()
+
 BASE_DN = os.getenv('BASE_DN')
 
 SMTPport=(int)(os.getenv('SMTP_PORT'))
@@ -22,7 +32,17 @@ TLS = os.getenv("TLS", "False").lower() == "true"
 SMTPserver = os.getenv('SMTP_SERVER')
 sender = os.getenv('SMTP_SENDER')
 SMTPusername = os.getenv('SMTP_USERNAME')
-SMTPpassword = os.getenv('SMTP_PASSWORD')
+
+#SMTP password
+pathSMTP=os.getenv('SMTP_PATH')
+with open(pathSMTP, "rb") as key_file:
+    key = key_file.read()
+
+f = Fernet(key)
+encrypted_password = os.getenv("SMTP_PASSWORD").encode()
+SMTPpassword = f.decrypt(encrypted_password).decode()
+
+BASE_DN = os.getenv('BASE_DN')
 
 def send_notification(recipient,message):
     try:
@@ -154,3 +174,4 @@ try:
 
 except Exception as e:
     print(f"Connection to AD server failed :( - {e}")
+
