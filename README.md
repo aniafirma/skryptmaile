@@ -9,6 +9,8 @@ SMTP_SENDER=
 SMTP_PORT=
 TLS=
 BASE_DN=
+AD_PATH=
+SMTP_PATH=
 
 Źródła: 
 https://dnmtechs.com/python-3-ldap-authentication-with-active-directory/
