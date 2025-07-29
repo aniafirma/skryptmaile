@@ -23,3 +23,4 @@ https://stackoverflow.com/questions/64505/sending-mail-from-python-using-smtp
 https://docs.python.org/3/library/smtplib.html
 https://docs.python.org/3/library/email.mime.html
 https://mailtrap.io/blog/python-send-html-email/
+https://emilylahren.com/2024/07/using-an-encrypted-env-file-with-your-python-script-to-secure-data/#how-to-access-secrets
