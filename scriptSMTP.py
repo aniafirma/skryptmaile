@@ -16,7 +16,6 @@ server = Server(os.getenv('AD_SERVER'))
 username = os.getenv('AD_USERNAME')
 password = os.getenv('AD_PASSWORD')
 BASE_DN = os.getenv('BASE_DN')
-print(BASE_DN)
 
 SMTPport=(int)(os.getenv('SMTP_PORT'))
 TLS = os.getenv("TLS", "False").lower() == "true"
@@ -112,8 +111,7 @@ try:
         date_changed=entry['pwdLastSet'].value
         when_set=winfiletime.to_datetime(date_changed)
         mail = entry['mail'].value
-        if isinstance(mail, list):
-            mail = mail[0] if mail else None
+
         if not mail:
             print(f"User has no email : {entry['distinguishedName']}")
             continue
